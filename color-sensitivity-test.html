@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Sensitivity Test</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 1.5rem;
+            font-size: 2.2rem;
+        }
+        
+        .game-container {
+            margin: 20px 0;
+            width: 100%;
+        }
+        
+        .grid {
+            display: grid;
+            margin: 0 auto;
+            gap: 8px;
+            aspect-ratio: 1;
+            max-width: 100%;
+            background-color: #f8f8f8;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        
+        .square {
+            width: 100%;
+            height: 100%;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .square:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .level-info {
+            margin: 20px 0;
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .timer {
+            font-size: 1.2em;
+            margin: 15px 0;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+        
+        .timer.warning {
+            color: #e74c3c;
+            font-weight: bold;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1.1em;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 15px 0;
+            transition: background-color 0.3s, transform 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        .result-container {
+            margin-top: 20px;
+            display: none;
+            text-align: left;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 24px;
+            background-color: #ecf0f1;
+            border-radius: 12px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            background-color: #2ecc71;
+            border-radius: 12px;
+            transition: width 0.5s ease-in-out;
+        }
+        
+        .instructions {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            line-height: 1.6;
+        }
+        
+        .instructions p {
+            margin: 10px 0;
+            color: #34495e;
+        }
+        
+        #result-analysis {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            line-height: 1.6;
+        }
+        
+        #level-analysis {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        #level-analysis ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        #level-analysis li {
+            margin: 10px 0;
+            padding: 8px;
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+                margin: 10px;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .level-info {
+                font-size: 1.1em;
+            }
+            
+            .timer {
+                font-size: 1.1em;
+            }
+            
+            button {
+                width: 100%;
+                padding: 10px 20px;
+            }
+            
+            .grid {
+                gap: 4px;
+                padding: 5px;
+            }
+            
+            .square {
+                border-radius: 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Color Sensitivity Test</h1>
+        
+        <div class="instructions" id="instructions">
+            <p>In each level, identify the square that has a different color from the others.</p>
+            <p>Click on the different square to proceed to the next level. There are 10 levels with increasing difficulty.</p>
+            <p>After the test, you'll receive a detailed analysis of your color sensitivity.</p>
+            <button id="start-btn">Start Test</button>
+        </div>
+        
+        <div class="game-container" id="game-container" style="display: none;">
+            <div class="level-info">Level <span id="current-level">1</span>/10</div>
+            <div class="timer">Time Remaining: <span id="timer">60</span> seconds</div>
+            <div class="grid" id="grid"></div>
+        </div>
+        
+        <div class="result-container" id="result-container">
+            <h2>Test Results</h2>
+            <p>Your Score: <span id="total-score">0</span> / 10</p>
+            <p>Time Taken: <span id="total-time">0</span> seconds</p>
+            
+            <h3>Color Sensitivity Analysis</h3>
+            <div class="progress-bar">
+                <div class="progress" id="progress-bar"></div>
+            </div>
+            
+            <div id="result-analysis"></div>
+            
+            <h3>Level Performance</h3>
+            <div id="level-analysis"></div>
+            
+            <button id="restart-btn">Try Again</button>
+        </div>
+    </div>
+
+    <script>
+        // 游戏配置
+        const config = {
+            totalLevels: 10,
+            levelSizes: [
+                { rows: 2, cols: 2 }, // 关卡1: 2x2
+                { rows: 3, cols: 3 }, // 关卡2: 3x3
+                { rows: 4, cols: 4 }, // 关卡3: 4x4
+                { rows: 5, cols: 5 }, // 关卡4: 5x5
+                { rows: 6, cols: 6 }, // 关卡5: 6x6
+                { rows: 7, cols: 7 }, // 关卡6: 7x7
+                { rows: 8, cols: 8 }, // 关卡7: 8x8
+                { rows: 9, cols: 9 }, // 关卡8: 9x9
+                { rows: 10, cols: 10 }, // 关卡9: 10x10
+                { rows: 12, cols: 12 }  // 关卡10: 12x12
+            ],
+            colorDifferences: [
+                30, // 关卡1的颜色差异
+                25, // 关卡2的颜色差异
+                20, // 关卡3的颜色差异
+                15, // 关卡4的颜色差异
+                12, // 关卡5的颜色差异
+                10, // 关卡6的颜色差异
+                8,  // 关卡7的颜色差异
+                6,  // 关卡8的颜色差异
+                4,  // 关卡9的颜色差异
+                3   // 关卡10的颜色差异
+            ]
+        };
+
+        // 游戏状态
+        let gameState = {
+            currentLevel: 1,
+            startTime: 0,
+            levelStartTime: 0,
+            levelTimes: [],
+            correctAnswers: [],
+            wrongAttempts: [],
+            differentSquarePos: null,
+            colorTypes: ['red', 'green', 'blue', 'yellow', 'purple', 'cyan', 'orange', 'pink', 'brown', 'gray'],
+            remainingTime: 60,
+            levelColors: [] // 记录每个关卡的颜色类型
+        };
+
+        // 获取DOM元素
+        const instructionsDiv = document.getElementById('instructions');
+        const gameContainerDiv = document.getElementById('game-container');
+        const resultContainerDiv = document.getElementById('result-container');
+        const startBtn = document.getElementById('start-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const gridDiv = document.getElementById('grid');
+        const currentLevelSpan = document.getElementById('current-level');
+        const timerSpan = document.getElementById('timer');
+        const totalScoreSpan = document.getElementById('total-score');
+        const totalTimeSpan = document.getElementById('total-time');
+        const progressBar = document.getElementById('progress-bar');
+        const resultAnalysisDiv = document.getElementById('result-analysis');
+        const levelAnalysisDiv = document.getElementById('level-analysis');
+
+        // 定时器
+        let timerInterval;
+
+        // 初始化游戏
+        function initGame() {
+            gameState = {
+                currentLevel: 1,
+                startTime: 0,
+                levelStartTime: 0,
+                levelTimes: [],
+                correctAnswers: [],
+                wrongAttempts: [],
+                differentSquarePos: null,
+                colorTypes: ['red', 'green', 'blue', 'yellow', 'purple', 'cyan', 'orange', 'pink', 'brown', 'gray'],
+                remainingTime: 60,
+                levelColors: []
+            };
+            
+            startBtn.addEventListener('click', startGame);
+            restartBtn.addEventListener('click', restartGame);
+        }
+
+        // 开始游戏
+        function startGame() {
+            instructionsDiv.style.display = 'none';
+            gameContainerDiv.style.display = 'block';
+            resultContainerDiv.style.display = 'none';
+            
+            gameState.startTime = Date.now();
+            gameState.levelStartTime = Date.now();
+            
+            startLevel(gameState.currentLevel);
+            startTimer();
+        }
+
+        // 重新开始游戏
+        function restartGame() {
+            gameState.currentLevel = 1;
+            gameState.levelTimes = [];
+            gameState.correctAnswers = [];
+            gameState.wrongAttempts = [];
+            
+            resultContainerDiv.style.display = 'none';
+            gameContainerDiv.style.display = 'block';
+            
+            gameState.startTime = Date.now();
+            gameState.levelStartTime = Date.now();
+            
+            startLevel(gameState.currentLevel);
+            startTimer();
+        }
+
+        // 开始计时器
+        function startTimer() {
+            clearInterval(timerInterval);
+            gameState.remainingTime = 60;
+            timerSpan.textContent = gameState.remainingTime;
+            
+            timerInterval = setInterval(() => {
+                gameState.remainingTime--;
+                timerSpan.textContent = gameState.remainingTime;
+                
+                // 当剩余时间低于10秒时改变计时器颜色
+                if (gameState.remainingTime <= 10) {
+                    timerSpan.parentElement.classList.add('warning');
+                } else {
+                    timerSpan.parentElement.classList.remove('warning');
+                }
+                
+                // 时间耗尽时结束游戏
+                if (gameState.remainingTime <= 0) {
+                    clearInterval(timerInterval);
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        // 开始指定关卡
+        function startLevel(level) {
+            gameState.wrongAttempts[level - 1] = 0;
+            currentLevelSpan.textContent = level;
+            
+            const { rows, cols } = config.levelSizes[level - 1];
+            const totalSquares = rows * cols;
+            const colorDifference = config.colorDifferences[level - 1];
+            
+            // 随机选择一个颜色类型
+            const colorTypeIndex = Math.floor(Math.random() * gameState.colorTypes.length);
+            const colorType = gameState.colorTypes[colorTypeIndex];
+            
+            // 记录当前关卡的颜色类型
+            gameState.levelColors[level - 1] = colorType;
+            
+            // 生成基本颜色
+            let baseColor;
+            switch (colorType) {
+                case 'red':
+                    baseColor = { r: 150 + Math.random() * 50, g: 50 + Math.random() * 30, b: 50 + Math.random() * 30 };
+                    break;
+                case 'green':
+                    baseColor = { r: 50 + Math.random() * 30, g: 150 + Math.random() * 50, b: 50 + Math.random() * 30 };
+                    break;
+                case 'blue':
+                    baseColor = { r: 50 + Math.random() * 30, g: 50 + Math.random() * 30, b: 150 + Math.random() * 50 };
+                    break;
+                case 'yellow':
+                    baseColor = { r: 200 + Math.random() * 55, g: 200 + Math.random() * 55, b: 50 + Math.random() * 30 };
+                    break;
+                case 'purple':
+                    baseColor = { r: 130 + Math.random() * 40, g: 50 + Math.random() * 30, b: 130 + Math.random() * 40 };
+                    break;
+                case 'cyan':
+                    baseColor = { r: 50 + Math.random() * 30, g: 180 + Math.random() * 50, b: 180 + Math.random() * 50 };
+                    break;
+                case 'orange':
+                    baseColor = { r: 220 + Math.random() * 35, g: 130 + Math.random() * 40, b: 50 + Math.random() * 30 };
+                    break;
+                case 'pink':
+                    baseColor = { r: 220 + Math.random() * 35, g: 120 + Math.random() * 40, b: 170 + Math.random() * 40 };
+                    break;
+                case 'brown':
+                    baseColor = { r: 150 + Math.random() * 40, g: 100 + Math.random() * 40, b: 60 + Math.random() * 40 };
+                    break;
+                case 'gray':
+                    const grayValue = 100 + Math.random() * 80;
+                    baseColor = { r: grayValue, g: grayValue, b: grayValue };
+                    break;
+                default:
+                    baseColor = { r: 100 + Math.random() * 100, g: 100 + Math.random() * 100, b: 100 + Math.random() * 100 };
+            }
+            
+            // 生成不同颜色
+            let differentColor;
+            
+            if (Math.random() > 0.5) {
+                // 增加颜色值
+                differentColor = {
+                    r: Math.min(255, baseColor.r + (Math.random() > 0.5 ? colorDifference : 0)),
+                    g: Math.min(255, baseColor.g + (Math.random() > 0.5 ? colorDifference : 0)),
+                    b: Math.min(255, baseColor.b + (Math.random() > 0.5 ? colorDifference : 0))
+                };
+            } else {
+                // 减少颜色值
+                differentColor = {
+                    r: Math.max(0, baseColor.r - (Math.random() > 0.5 ? colorDifference : 0)),
+                    g: Math.max(0, baseColor.g - (Math.random() > 0.5 ? colorDifference : 0)),
+                    b: Math.max(0, baseColor.b - (Math.random() > 0.5 ? colorDifference : 0))
+                };
+            }
+            
+            // 随机选择一个方块位置
+            gameState.differentSquarePos = Math.floor(Math.random() * totalSquares);
+            
+            // 创建网格
+            gridDiv.innerHTML = '';
+            gridDiv.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            gridDiv.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+            
+            // 设置网格大小
+            const gridSize = Math.min(500, window.innerWidth - 40);
+            gridDiv.style.width = `${gridSize}px`;
+            gridDiv.style.height = `${gridSize}px`;
+            
+            // 创建方块
+            for (let i = 0; i < totalSquares; i++) {
+                const square = document.createElement('div');
+                square.className = 'square';
+                
+                // 设置方块颜色
+                const color = i === gameState.differentSquarePos ? differentColor : baseColor;
+                square.style.backgroundColor = `rgb(${Math.floor(color.r)}, ${Math.floor(color.g)}, ${Math.floor(color.b)})`;
+                
+                // 添加点击事件
+                square.addEventListener('click', () => {
+                    if (i === gameState.differentSquarePos) {
+                        // 正确点击
+                        gameState.correctAnswers[level - 1] = true;
+                        const levelTime = Math.floor((Date.now() - gameState.levelStartTime) / 1000);
+                        gameState.levelTimes[level - 1] = levelTime;
+                        
+                        if (level < config.totalLevels) {
+                            // 进入下一关
+                            gameState.currentLevel++;
+                            gameState.levelStartTime = Date.now();
+                            startLevel(gameState.currentLevel);
+                        } else {
+                            // 游戏结束
+                            endGame();
+                        }
+                    } else {
+                        // 错误点击
+                        gameState.wrongAttempts[level - 1]++;
+                    }
+                });
+                
+                gridDiv.appendChild(square);
+            }
+        }
+
+        // 结束游戏
+        function endGame() {
+            clearInterval(timerInterval);
+            
+            gameContainerDiv.style.display = 'none';
+            resultContainerDiv.style.display = 'block';
+            
+            // 计算总分
+            const totalScore = gameState.correctAnswers.filter(Boolean).length;
+            totalScoreSpan.textContent = totalScore;
+            
+            // 计算剩余时间
+            const remainingTime = gameState.remainingTime;
+            
+            // 计算总时间
+            const totalTime = 60 - remainingTime;
+            totalTimeSpan.textContent = totalTime;
+            
+            // 设置进度条
+            const scorePercentage = (totalScore / config.totalLevels) * 100;
+            progressBar.style.width = `${scorePercentage}%`;
+            
+            // 分析结果
+            const analysisText = getAnalysisText(totalScore);
+            
+            // 分析颜色表现
+            const { bestColor, worstColor } = analyzeColorPerformance();
+            
+            // 进行颜色敏感度分析
+            const colorAnalysis = getColorAnalysisText(bestColor, worstColor);
+            
+            resultAnalysisDiv.innerHTML = `<p>${analysisText}</p>${colorAnalysis}`;
+            
+            // 每关表现分析
+            let levelAnalysisHtml = '<ul>';
+            for (let i = 0; i < config.totalLevels; i++) {
+                const levelNum = i + 1;
+                const passed = gameState.correctAnswers[i];
+                const attempts = gameState.wrongAttempts[i] || 0;
+                const colorType = gameState.levelColors[i] || 'unknown';
+                
+                let levelResult = passed ? 'Passed' : 'Failed';
+                let colorText = getColorEnglishName(colorType);
+                levelAnalysisHtml += `<li>Level ${levelNum}: ${levelResult}, Color: ${colorText}, Attempts: ${attempts}</li>`;
+            }
+            levelAnalysisHtml += '</ul>';
+            
+            levelAnalysisDiv.innerHTML = levelAnalysisHtml;
+        }
+        
+        // 分析玩家在不同颜色类型上的表现
+        function analyzeColorPerformance() {
+            // 为每种颜色类型创建对象存储数据
+            let colorPerformance = {};
+            
+            // 初始化每种颜色的表现数据
+            for (let colorType of gameState.colorTypes) {
+                colorPerformance[colorType] = {
+                    total: 0,      // 该颜色出现的总次数
+                    passed: 0,      // 成功通过的次数
+                    attempts: 0     // 错误尝试的次数
+                };
+            }
+            
+            // 统计数据
+            for (let i = 0; i < gameState.levelColors.length; i++) {
+                const colorType = gameState.levelColors[i];
+                
+                // 如果没有进行到这个关卡，则跳过
+                if (colorType === undefined) continue;
+                
+                colorPerformance[colorType].total++;
+                
+                if (gameState.correctAnswers[i]) {
+                    colorPerformance[colorType].passed++;
+                }
+                
+                colorPerformance[colorType].attempts += gameState.wrongAttempts[i] || 0;
+            }
+            
+            // 找出表现最佳和最差的颜色
+            let bestColor = null;
+            let worstColor = null;
+            let bestPerformance = -1;
+            let worstPerformance = Number.MAX_VALUE;
+            
+            for (let colorType in colorPerformance) {
+                // 跳过没有出现的颜色
+                if (colorPerformance[colorType].total === 0) continue;
+                
+                // 计算表现分数 (通过率减去平均错误次数)
+                const passRate = colorPerformance[colorType].passed / colorPerformance[colorType].total;
+                const avgAttempts = colorPerformance[colorType].attempts / colorPerformance[colorType].total;
+                const performance = passRate - 0.1 * avgAttempts;
+                
+                if (performance > bestPerformance) {
+                    bestPerformance = performance;
+                    bestColor = colorType;
+                }
+                
+                if (performance < worstPerformance) {
+                    worstPerformance = performance;
+                    worstColor = colorType;
+                }
+            }
+            
+            return { bestColor, worstColor };
+        }
+        
+        // 更新分析文本
+        function getAnalysisText(totalScore) {
+            if (totalScore >= 9) {
+                return 'You have exceptional color sensitivity! You can detect extremely subtle color differences.';
+            } else if (totalScore >= 7) {
+                return 'You have excellent color sensitivity and can detect most fine color differences.';
+            } else if (totalScore >= 5) {
+                return 'You have average color sensitivity and can detect moderate color differences.';
+            } else if (totalScore >= 3) {
+                return 'Your color sensitivity is slightly below average. You might benefit from additional training in color-related tasks.';
+            } else {
+                return 'Your color sensitivity is low. You may have color vision deficiency. We recommend consulting an eye care professional.';
+            }
+        }
+        
+        // 更新颜色分析文本
+        function getColorAnalysisText(bestColor, worstColor) {
+            let analysisHtml = '<h4>Color Sensitivity Analysis</h4>';
+            
+            if (bestColor && gameState.levelColors.length >= 3) {
+                analysisHtml += `<p>You show exceptional sensitivity to <strong style="color:${getColorStyle(bestColor)}">${getColorEnglishName(bestColor)}</strong> colors, demonstrating excellent ability in detecting subtle variations in this color family.</p>`;
+            }
+            
+            if (worstColor && bestColor !== worstColor && gameState.levelColors.length >= 3) {
+                analysisHtml += `<p>You may find it challenging to distinguish subtle differences in <strong style="color:${getColorStyle(worstColor)}">${getColorEnglishName(worstColor)}</strong> colors. Consider practicing with this color family to improve your sensitivity.</p>`;
+            }
+            
+            return analysisHtml;
+        }
+        
+        // 获取颜色的英文名称
+        function getColorEnglishName(colorType) {
+            switch(colorType) {
+                case 'red': return 'red';
+                case 'green': return 'green';
+                case 'blue': return 'blue';
+                case 'yellow': return 'yellow';
+                case 'purple': return 'purple';
+                case 'cyan': return 'cyan';
+                case 'orange': return 'orange';
+                case 'pink': return 'pink';
+                case 'brown': return 'brown';
+                case 'gray': return 'gray';
+                default: return 'unknown';
+            }
+        }
+        
+        // 获取颜色的CSS样式值
+        function getColorStyle(colorType) {
+            switch(colorType) {
+                case 'red': return '#ff3333';
+                case 'green': return '#33cc33';
+                case 'blue': return '#3366ff';
+                case 'yellow': return '#ffcc00';
+                case 'purple': return '#9933cc';
+                case 'cyan': return '#00cccc';
+                case 'orange': return '#ff8000';
+                case 'pink': return '#ff66cc';
+                case 'brown': return '#996633';
+                case 'gray': return '#808080';
+                default: return '#000000';
+            }
+        }
+
+        // 初始化游戏
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+</html>
